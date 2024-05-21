@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Interface</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="mb-4">API Interface</h1>
+
+    <!-- Create Item Form -->
+    <div class="card mb-4">
+        <div class="card-header">Create Item</div>
+        <div class="card-body">
+            <form id="create-form">
+                <div class="form-group">
+                    <label for="create-username">Username</label>
+                    <input type="text" class="form-control" id="create-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-title">Title</label>
+                    <input type="text" class="form-control" id="create-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="create-content">Content</label>
+                    <textarea class="form-control" id="create-content" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="create-price">Price</label>
+                    <input type="number" class="form-control" id="create-price" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Item Form -->
+    <div class="card mb-4" id="update-card" style="display: none;">
+        <div class="card-header">Update Item</div>
+        <div class="card-body">
+            <form id="update-form">
+                <input type="hidden" id="update-id">
+                <div class="form-group">
+                    <label for="update-username">Username</label>
+                    <input type="text" class="form-control" id="update-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="update-title">Title</label>
+                    <input type="text" class="form-control" id="update-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="update-content">Content</label>
+                    <textarea class="form-control" id="update-content" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="update-price">Price</label>
+                    <input type="number" class="form-control" id="update-price" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+    <!-- Items List -->
+    <div class="card mb-4">
+        <div class="card-header">Items List</div>
+        <div class="card-body">
+            <ul class="list-group" id="items-list"></ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    const apiUrl = 'http://54.180.103.233:8080';  // Replace with your actual API URL
+
+    // Fetch all items when the page loads
+    $(document).ready(function () {
+        fetchItems();
+    });
+
+    // Fetch all items
+    function fetchItems() {
+        $.get(`${apiUrl}/post`, function (data) {
+            const itemsList = $('#items-list');
+            itemsList.empty();
+            data.forEach(item => {
+                itemsList.append(`
+                        <li class="list-group-item">
+                            <h5>title : ${item.title}</h5>
+                            <p>content : ${item.content}</p>
+                            <small>username :  ${item.username}, Price: ${item.price}</small>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-warning" onclick="showUpdateForm(${item.id}, '${item.username}', '${item.title}', '${item.content}', ${item.price})">Update</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">Delete</button>
+                            </div>
+                        </li>
+                    `);
+            });
+        });
+    }
+
+    // Create new item
+    $('#create-form').on('submit', function (e) {
+        e.preventDefault();
+        const newItem = {
+            username: $('#create-username').val(),
+            title: $('#create-title').val(),
+            content: $('#create-content').val(),
+            price: $('#create-price').val()
+        };
+
+        $.ajax({
+            type: "POST",
+            url: `${apiUrl}/post`,
+            contentType: "application/json",
+            data: JSON.stringify(newItem),
+            success: function (response) {
+                alert('메시지가 성공적으로 작성되었습니다.');
+                window.location.reload();
+                fetchItems();
+                $('#create-form')[0].reset();
+            }
+        });
+    });
+
+    // Show update form
+    function showUpdateForm(id, username, title, content, price) {
+        $('#update-id').val(id);
+        $('#update-username').val(username);
+        $('#update-title').val(title);
+        $('#update-content').val(content);
+        $('#update-price').val(price);
+        $('#update-card').show();
+        $('#create-form').hide();
+    }
+
+    // Update item
+    $('#update-form').on('submit', function (e) {
+        e.preventDefault();
+        const updatedItem = {
+            username: $('#update-username').val(),
+            title: $('#update-title').val(),
+            content: $('#update-content').val(),
+            price: $('#update-price').val()
+        };
+
+        const id = $('#update-id').val();
+        $.ajax({
+            url: `${apiUrl}/post/${id}`,
+            type: 'PUT',
+            data: JSON.stringify(updatedItem),
+            contentType: 'application/json; charset=utf-8',
+            success: function () {
+                alert('메시지가 성공적으로 변경되었습니다.');
+                fetchItems();
+                $('#update-card').hide();
+                $('#update-form')[0].reset();
+                $('#create-form').show();
+            }
+        });
+    });
+
+    // Delete item
+    function deleteItem(id) {
+        $.ajax({
+            url: `${apiUrl}/post/${id}`,
+            type: 'DELETE',
+            success: function () {
+                alert('삭제완료');
+                fetchItems();
+            }
+        });
+    }
+</script>
+</body>
+</html>
